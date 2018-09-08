@@ -16,12 +16,18 @@ function getImg(url) {
 				let rez = [];
 				console.log("получили json таска");
 				let listSolve = html.editions;
-				listSolve.forEach(solve => {
-					let imgs = solve.images;
-					for (let num in imgs) {
-						rez.push("https://gdz.ru" + imgs[num].url);
-					}
-				});
+				try {
+					listSolve.forEach(solve => {
+						let imgs = solve.images;
+						for (let num in imgs) {
+							rez.push("https://gdz.ru" + imgs[num].url);
+						}
+					});
+				} catch(e){
+					console.log("Возникла ошибка", e, html);
+					console.log('list solve', listSolve);
+					reject();
+				}
 				resolve(rez);
 			})
 			.catch(function (err) {
