@@ -1,72 +1,48 @@
-var rp = require("request-promise");
-var cheerio = require("cheerio");
+//const { getTask } = require("./getTask");
 
-rp("https://gdz.ru/class-1/matematika/moro-m-i-2011/")
+const { getURLs } = require("./getURLs");
+const { getImg } = require("./getImg");
+
+const rp = require("request-promise");
+const cheerio = require("cheerio");
+const urlDownload = "https://gdz.ru/class-6/matematika/didakticheskie-materiali-merzlyak/";
+
+let rez = {
+	book_name: getNameBook(urlDownload),
+	tasks: {}
+};
+
+function getNameBook(url) {
+	return url.match(/\/[A-Za-z0-9\-\.]+\/$/g)[0];
+}
+rp(urlDownload)
 	.then(function (html) {
-		console.log("получили разметку");
-		var $ = cheerio.load(html);
+		console.log("получили разметку учебника");
+		const $ = cheerio.load(html);
 		const taskList = $(".task-list");
 		console.log(taskList.children().eq(0).children().is("section"));
 		console.log(taskList.children().eq(0).children().is("section"));
-		getURLs(taskList.children());
-
+		let urls = getURLs(taskList.children(),urlDownload);
+		console.log(urls);
+		
+		getTask(urls);
 	})
 	.catch(function (err) {
 		console.log("возникла ошибка: ", err);
 	});
 
 
-/*
-	передать элементы, 
-	возвратит обьект ссылками на ответ пример:
-	{
-		'чаcть1': [{url, num}]
-		'чаcть2': 
-			подчасть1: [{url, num}],
-			подчасть2: [{url, num}]
+function getTask(urls) {
+	let tmpArr = [];
+	console.log(urls);
+	for (const key in urls) {
+		console.log("создать папку: " + key);
+		rez["tasks"][key] = []
+		const razdelTask = urls[key];
+		razdelTask.forEach(element => {
+			rez["tasks"][key] = getImg(element.url);
+		});
 	}
-*/
-function getURLs(el){
-	let obj = {};
-	getStruct(el);
-	function getStruct(el, context = "") {
-		if (el.is("section")) {
-			let sections = el;
-			for (let index = 0; index < sections.length; index++) {
-				const section = sections.eq(index);
-				let contextCreat = section.eq(0).children().parent("section").parent("section").children("header").text().replace(/\s\W\s+/g, "");
-				getStruct(section.eq(0).children(), contextCreat);
-			}
-			
-		}
-		else{
-			console.log("context", context);
-			console.log("setion not");
-			fillRez(el,context);
-		}
-		
-	}
-	function fillRez(el, context) {
-		//el = el.children()
-		let header = el.eq(0).text().replace(/\s\W\s+/g, '');
-		console.log("get header", header);
-		let tmpArr = [];
-		let listTask = el.eq(1).find("a");
-		for (let index = 0; index < listTask.length; index++) {
-			const task = listTask.eq(index);
-			const url = task.attr("href");
-			const num = task.attr("title");
-			//console.log("url", url);
-			//console.log("num", num);
-			tmpArr.push({ url, num });
-		}
-		if (context){
-			obj[context][header] = tmpArr;
-		}
-		else{
-			obj[header] = tmpArr;
-		}
-	}
-	console.debug(obj);
-	return obj;
+	console.log(rez);
+	
 }
