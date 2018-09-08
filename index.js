@@ -23,8 +23,7 @@ rp(urlDownload)
 		console.log(taskList.children().eq(0).children().is("section"));
 		console.log(taskList.children().eq(0).children().is("section"));
 		let urls = getURLs(taskList.children(),urlDownload);
-		console.log(urls);
-		
+		//console.log(urls);
 		getTask(urls);
 	})
 	.catch(function (err) {
@@ -34,7 +33,7 @@ rp(urlDownload)
 
 function getTask(urls) {
 	let tmpArr = [];
-	console.log(urls);
+	//console.log(urls);
 	for (const key in urls) {
 		console.log("создать папку: " + key);
 		rez["tasks"][key] = []
@@ -43,6 +42,6 @@ function getTask(urls) {
 			rez["tasks"][key] = getImg(element.url);
 		});
 	}
-	console.log(rez);
+	console.log("this is rez", rez);
 	
 }
