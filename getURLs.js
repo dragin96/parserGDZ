@@ -34,9 +34,9 @@ function getURLs(el, urlBook) {
 		for (let index = 0; index < listTask.length; index++) {
 			const task = listTask.eq(index);
 			const tmpUrl = task.attr("href");
-			const url = /#task\?t=/.test(tmpUrl) ? urlBook + tmpUrl.replace(/#task\?t=/, "") : "https://gdz.ru/" + tmpUrl;
+			const url = /#task\?t=/.test(tmpUrl) ? urlBook + tmpUrl.replace(/#task\?t=/, "") : "https://gdz.ru" + tmpUrl;
 			const num = task.attr("title");
-			//console.log("url", url);
+			console.log("urlIMG", url);
 			//console.log("num", num);
 			tmpArr.push({ url, num });
 		}

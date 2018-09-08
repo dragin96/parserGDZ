@@ -9,7 +9,7 @@ const {
 
 const rp = require("request-promise");
 const cheerio = require("cheerio");
-const urlDownload = "https://gdz.ru/class-6/matematika/didakticheskie-materiali-merzlyak/";
+const urlDownload = "https://gdz.ru/class-1/chelovek-i-mir/trafimova/";
 
 let rez = {
 	book_name: getNameBook(urlDownload),
@@ -43,9 +43,17 @@ rp(urlDownload)
 		rez["tasks"][key] = []
 		const razdelTask = urls[key];
 		let ii = 0;
+		let countError = 0;
 		for(let element of razdelTask){
 			console.log(++ii, razdelTask.length);
-			rez["tasks"][key] = await getImg(element.url).catch(()=>{
+			await getImg(element.url).then((el)=>{
+				rez["tasks"][key][ii] = el;
+				countError = 0;
+				console.log(el);
+			}).catch(async ()=>{
+				if(countError<5){
+					rez["tasks"][key][ii] = await getImg(element.url);
+				}
 				console.log('произошла ошибка с', ii);
 			});
 		}
