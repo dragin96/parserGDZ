@@ -1,7 +1,11 @@
 //const { getTask } = require("./getTask");
 
-const { getURLs } = require("./getURLs");
-const { getImg } = require("./getImg");
+const {
+	getURLs
+} = require("./getURLs");
+const {
+	getImg
+} = require("./getImg");
 
 const rp = require("request-promise");
 const cheerio = require("cheerio");
@@ -22,7 +26,7 @@ rp(urlDownload)
 		const taskList = $(".task-list");
 		console.log(taskList.children().eq(0).children().is("section"));
 		console.log(taskList.children().eq(0).children().is("section"));
-		let urls = getURLs(taskList.children(),urlDownload);
+		let urls = getURLs(taskList.children(), urlDownload);
 		//console.log(urls);
 		getTask(urls);
 	})
@@ -31,17 +35,29 @@ rp(urlDownload)
 	});
 
 
-function getTask(urls) {
+ async function getTask(urls) {
 	let tmpArr = [];
 	//console.log(urls);
 	for (const key in urls) {
 		console.log("создать папку: " + key);
 		rez["tasks"][key] = []
 		const razdelTask = urls[key];
-		razdelTask.forEach(element => {
-			rez["tasks"][key] = getImg(element.url);
-		});
+		let ii = 0;
+		for(let element of razdelTask){
+			console.log(++ii, razdelTask.length);
+			rez["tasks"][key] = await getImg(element.url).catch(()=>{
+				console.log('произошла ошибка с', ii);
+			});
+		}
+		
+		/*
+		razdelTask.forEach(async element => {
+			console.log(++ii, razdelTask.length);
+			rez["tasks"][key] = await getImg(element.url).catch(()=>{
+				console.log('произошла ошибка с', ii);
+			});
+		});*/
 	}
 	console.log("this is rez", rez);
-	
+
 }
