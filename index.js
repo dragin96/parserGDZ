@@ -48,19 +48,20 @@ app.post("/getTasks", function(req, res) {
 	//console.log(urls);
 	for (const key in urls) {
 		console.log("создать папку: " + key);
-		rez["tasks"][key] = []
+		rez["tasks"][key] = {};
 		const razdelTask = urls[key];
 		let ii = 0;
 		let countError = 0;
 		for(let element of razdelTask){
 			console.log(++ii, razdelTask.length);
+			rez["tasks"][key][element.num] = {}
 			await getImg(element.url).then((el)=>{
-				rez["tasks"][key][ii] = el;
+				rez["tasks"][key][element.num] = el;
 				countError = 0;
 				console.log(el);
 			}).catch(async ()=>{
 				if(countError<5){
-					rez["tasks"][key][ii] = await getImg(element.url);
+					rez["tasks"][key][element.num] = await getImg(element.url);
 				}
 				console.log('произошла ошибка с', ii);
 			});
