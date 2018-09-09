@@ -9,7 +9,7 @@ const {
 
 const rp = require("request-promise");
 const cheerio = require("cheerio");
-const urlDownload = "https://gdz.ru/class-1/chelovek-i-mir/trafimova/";
+let urlDownload = "https://gdz.ru/class-1/chelovek-i-mir/trafimova/";
 
 let rez = {
 	book_name: getNameBook(urlDownload),
@@ -25,8 +25,12 @@ app.listen(1080, function() {
 });
 
 app.post("/getTasks", function(req, res) {
-    var data = req.body;
-	
+	var data = req.body;
+	console.log('data', req.body);
+	if(!data.url){
+		return res.send("error");
+	}
+	urlDownload = data.url;
 	rp(urlDownload)
 	.then(function (html) {
 		console.log("получили разметку учебника");
