@@ -15,11 +15,19 @@ let rez = {
 	book_name: getNameBook(urlDownload),
 	tasks: {}
 };
+var express = require('express');
+var app = express();
 
-function getNameBook(url) {
-	return url.match(/\/[A-Za-z0-9\-\.]+\/$/g)[0];
-}
-rp(urlDownload)
+var bodyParser = require('body-parser');
+app.use(bodyParser.json());
+
+app.listen(1080, function() {
+});
+
+app.post("/getTasks", function(req, res) {
+    var data = req.body;
+	
+	rp(urlDownload)
 	.then(function (html) {
 		console.log("получили разметку учебника");
 		const $ = cheerio.load(html);
@@ -66,6 +74,12 @@ rp(urlDownload)
 			});
 		});*/
 	}
-	console.log("this is rez", rez);
+	res.send(rez);
 
+}
+});
+
+
+function getNameBook(url) {
+	return url.match(/\/[A-Za-z0-9\-\.]+\/$/g)[0];
 }
