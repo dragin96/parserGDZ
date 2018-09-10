@@ -12,7 +12,7 @@ const cheerio = require("cheerio");
 let urlDownload = "https://gdz.ru/class-1/chelovek-i-mir/trafimova/";
 
 let rez = {
-	book_name: getNameBook(urlDownload),
+	book_name: "",
 	tasks: {}
 };
 var express = require('express');
@@ -31,6 +31,7 @@ app.post("/getTasks", function(req, res) {
 		return res.send("error");
 	}
 	urlDownload = data.url;
+	rez.book_name=getNameBook(urlDownload);
 	rp(urlDownload)
 	.then(function (html) {
 		console.log("получили разметку учебника");
@@ -58,6 +59,7 @@ app.post("/getTasks", function(req, res) {
 		let countError = 0;
 		for(let element of razdelTask){
 			console.log(++ii, razdelTask.length);
+			element.num = element.num.replace('§', '');
 			rez["tasks"][key][element.num] = {}
 			await getImg(element.url).then((el)=>{
 				rez["tasks"][key][element.num] = el;
@@ -79,12 +81,17 @@ app.post("/getTasks", function(req, res) {
 			});
 		});*/
 	}
-	res.send(rez);
 
+	res.send(rez);
+	rez = {
+		book_name: "",
+		tasks: {}
+	};
 }
 });
 
 
 function getNameBook(url) {
+
 	return url.match(/\/[A-Za-z0-9\-\.]+\/$/g)[0];
 }
