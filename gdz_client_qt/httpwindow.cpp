@@ -61,7 +61,7 @@ const char defaultUrl[] = "https://gdz.ru/class-1/chelovek-i-mir/trafimova/";
 const char defaultUrl[] = "http://gdz.ru/class-1/chelovek-i-mir/trafimova/";
 #endif
 const char defaultFileName[] = "index.html";
-const char defaultServerUrl[] = "http://127.0.0.1:1080/getTasks";
+const char defaultServerUrl[] = "http://185.20.225.209:1080/getTasks";
 ProgressDialog::ProgressDialog(const QUrl &url, QWidget *parent)
     : QProgressDialog(parent)
 {
@@ -87,7 +87,7 @@ HttpWindow::HttpWindow(QWidget *parent)
     , urlLineEdit(new QLineEdit(defaultUrl))
     , downloadButton(new QPushButton(tr("Download")))
     // , launchCheckBox(new QCheckBox("Launch file"))
-   // , defaultFileLineEdit(new QLineEdit(defaultFileName))
+    // , defaultFileLineEdit(new QLineEdit(defaultFileName))
     , downloadDirectoryLineEdit(new QLineEdit)
     , reply(nullptr)
     , file(nullptr)
@@ -204,7 +204,7 @@ void HttpWindow::replyJsonFinished(QNetworkReply *reply){
             foreach (const QJsonValue taskUrl, tasks_keys_val.value(tasks_key).toArray()) {
                 QString fileName = tasks_key;
                 ++var_i;
-                if(var_i > 1){
+                if(tasks_keys_val.value(tasks_key).toArray().size() > 1){
                     fileName=  fileName + "(" + QString::number(var_i) + ")";
                 }
                 QStringList splits = taskUrl.toString().split(".");
@@ -214,7 +214,17 @@ void HttpWindow::replyJsonFinished(QNetworkReply *reply){
 
                 url =  QUrl(taskUrl.toString());
                 qDebug() << "url = " << url << "filename = " << fileName << "current_dir" << current_dir << book_name ;
+                this->suspendFlag = false;
                 download_url(url, fileName, current_dir, book_name);
+
+                /*while(true){
+                    QThread::msleep(1500);
+                    qDebug() << this->suspendFlag;
+                    if (this->suspendFlag) {
+                        qDebug() << "ОПУСТИЛИ ФЛАГ";
+                        break;
+                    }
+                }*/
                 this->loop->exec();
             }
         }
@@ -223,41 +233,54 @@ void HttpWindow::replyJsonFinished(QNetworkReply *reply){
 }
 
 void HttpWindow::download_url(QUrl newUrl, QString fileName, QString current_dir, QString book_name){
-    /* const QString urlSpec = urlLineEdit->text().trimmed();
-    if (urlSpec.isEmpty())
-        return;*/
 
-    //const QUrl newUrl = QUrl::fromUserInput(urlSpec);
     if (!newUrl.isValid()) {
         QMessageBox::information(this, tr("Error"),
                                  tr("Invalid URL: %1").arg(newUrl.errorString()));
         return;
     }
 
-    //QString fileName = newUrl.fileName();
-    /*if (fileName.isEmpty())
-        fileName = defaultFileLineEdit->text().trimmed();*/
+
     if (fileName.isEmpty())
         fileName = defaultFileName;
-
+    book_name.replace(QRegExp("[/\\:?\*\"<>]"), "");
+    current_dir.replace("/", "\\");
     QString parent_dir = downloadDirectoryLineEdit->text().trimmed();
-    QString book_name_dir = parent_dir + "\\" + book_name;
-    QString full_path = book_name_dir + "\\" + current_dir;
+
 
     if(!QDir(parent_dir).exists()){
-       qDebug() << "qdir dont exist";
-       QMessageBox::information(this, tr("Error"),
-                                tr("Dir not found: %1").arg(parent_dir));
-       return;
+        qDebug() << "qdir dont exist";
+        QMessageBox::information(this, tr("Error"),
+                                 tr("Dir not found: %1").arg(parent_dir));
+        return;
     }
-    if(!QDir(full_path).exists()){
-       QDir().mkdir(book_name_dir);
+
+    QString book_name_dir = parent_dir + "\\" + book_name;
+
+    qDebug() << "check book_name_dir" << book_name_dir;
+    if(!QDir(book_name_dir).exists()){
+        qDebug() << "book_name_dir dont exist, create" << book_name_dir;
+        QDir().mkdir(book_name_dir);
     }
+
+
+    qDebug() << "check book_name_sub_dir" << book_name_dir + "\\" + current_dir;
+    if(current_dir.split("\\").length()>0 && !QDir(book_name_dir + "\\" + current_dir.split("\\")[0]).exists()){
+        qDebug() << "book_name_dir + current_dir dont exist, create" << book_name_dir + "\\" +  current_dir.split("\\")[0];
+        QDir().mkdir(book_name_dir + "\\" +  current_dir.split("\\")[0]);
+    }
+
+    QString full_path = book_name_dir + "\\" + current_dir;
+
+    qDebug() << "check full_path" << full_path;
     if(!QDir(full_path).exists()){
-       QDir().mkdir(full_path);
+        qDebug() << "full_path dont exist, create" << full_path;
+        QDir().mkdir(full_path);
     }
     QString downloadDirectory = QDir::cleanPath(full_path);
-    qDebug() << "parent_dir" << parent_dir << "full_path" << full_path;
+    qDebug() << "parent_dir" << parent_dir;
+    qDebug() << "full_path" << full_path;
+
 
     bool useDirectory = !downloadDirectory.isEmpty() && QFileInfo(downloadDirectory).isDir();
     if (useDirectory)
@@ -273,7 +296,7 @@ void HttpWindow::download_url(QUrl newUrl, QString fileName, QString current_dir
                                   QMessageBox::Yes | QMessageBox::No,
                                   QMessageBox::No)
                 == QMessageBox::No) {
-            this->loop->exit();
+            //this->loop->exit();
             return;
         }
         QFile::remove(fileName);
@@ -281,7 +304,7 @@ void HttpWindow::download_url(QUrl newUrl, QString fileName, QString current_dir
 
     file = openFileForWrite(fileName);
     if (!file){
-        this->loop->exit();
+        //this->loop->exit();
         return;
     }
 
@@ -297,6 +320,7 @@ void HttpWindow::startRequest(const QUrl &requestedUrl)
 
     reply = qnam.get(QNetworkRequest(url));
     connect(reply, &QNetworkReply::finished, this, &HttpWindow::httpFinished);
+    //connect(reply, &QNetworkReply::finished, this, &HttpWindow::httpFinished);
     connect(reply, &QIODevice::readyRead, this, &HttpWindow::httpReadyRead);
 
     ProgressDialog *progressDialog = new ProgressDialog(url, this);
@@ -337,6 +361,7 @@ void HttpWindow::cancelDownload()
 
 void HttpWindow::httpFinished()
 {
+    this->loop->quit();
     QFileInfo fi;
     if (file) {
         fi.setFile(file->fileName());
@@ -386,10 +411,10 @@ void HttpWindow::httpFinished()
 
     statusLabel->setText(tr("Downloaded %1 bytes to %2\nin\n%3")
                          .arg(fi.size()).arg(fi.fileName(), QDir::toNativeSeparators(fi.absolutePath())));
-    /*if (launchCheckBox->isChecked())
-        QDesktopServices::openUrl(QUrl::fromLocalFile(fi.absoluteFilePath()));*/
+
     downloadButton->setEnabled(true);
-    this->loop->exit();
+    this->suspendFlag = true;
+    //this->loop->exit();
 }
 
 void HttpWindow::httpReadyRead()

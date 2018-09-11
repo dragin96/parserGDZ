@@ -111,10 +111,12 @@ private:
     QLineEdit *defaultFileLineEdit;
     QLineEdit *downloadDirectoryLineEdit;
     QEventLoop *loop;
+
     QUrl url;
     QNetworkAccessManager qnam;
     QNetworkReply *reply;
     QFile *file;
+    bool suspendFlag;
     bool httpRequestAborted;
 };
 
