@@ -20,15 +20,15 @@ function getURLs(el, urlBook) {
 			}
 		}
 		else {
-			console.log("context", context);
-			console.log("setion not");
+			//console.log("context", context);
+			//console.log("setion not");
 			fillRez(el, context);
 		}
 	}
 	function fillRez(el, context) {
 		//el = el.children()
 		let header = el.eq(0).text().replace(/\s\W\s+/g, '');
-		console.log("get header", header);
+		//console.log("get header", header);
 		let tmpArr = [];
 		let listTask = el.eq(1).find("a");
 		for (let index = 0; index < listTask.length; index++) {
@@ -36,13 +36,13 @@ function getURLs(el, urlBook) {
 			const tmpUrl = task.attr("href");
 			const url = /#task\?t=/.test(tmpUrl) ? urlBook + tmpUrl.replace(/#task\?t=/, "") : "https://gdz.ru" + tmpUrl;
 			const num = task.attr("title");
-			console.log("urlIMG", url);
+			//console.log("urlIMG", url);
 			//console.log("num", num);
 			tmpArr.push({ url, num });
 		}
 		context ? obj[context+"/"+header] = tmpArr : obj[header] = tmpArr;
 	}
-	console.debug(obj);
+	//console.debug(obj);
 	return obj;
 }
 exports.getURLs = getURLs;

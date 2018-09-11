@@ -14,7 +14,7 @@ function getImg(url) {
 		await rp(options)
 			.then(function (html) {
 				let rez = [];
-				console.log("получили json таска");
+				//console.log("получили json таска");
 				let listSolve = html.editions;
 				try {
 					listSolve.forEach(solve => {

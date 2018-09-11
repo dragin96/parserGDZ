@@ -24,11 +24,16 @@ app.use(bodyParser.json());
 app.listen(1080, function() {
 });
 
+let isProcessing=false;
 app.post("/getTasks", function(req, res) {
+	res.setTimeout(30*60*1000);
 	var data = req.body;
 	console.log('data', req.body);
 	if(!data.url){
 		return res.send("error");
+	}
+	if(isProcessing){
+		return res.send("Запрос уже обрабатывается");
 	}
 	urlDownload = data.url;
 	rez.book_name=getNameBook(urlDownload);
@@ -37,10 +42,10 @@ app.post("/getTasks", function(req, res) {
 		console.log("получили разметку учебника");
 		const $ = cheerio.load(html);
 		const taskList = $(".task-list");
-		console.log(taskList.children().eq(0).children().is("section"));
-		console.log(taskList.children().eq(0).children().is("section"));
+		//console.log(taskList.children().eq(0).children().is("section"));
 		let urls = getURLs(taskList.children(), urlDownload);
 		//console.log(urls);
+		isProcessing=true;
 		getTask(urls);
 	})
 	.catch(function (err) {
@@ -52,7 +57,7 @@ app.post("/getTasks", function(req, res) {
 	let tmpArr = [];
 	//console.log(urls);
 	for (const key in urls) {
-		console.log("создать папку: " + key);
+		//console.log("создать папку: " + key);
 		rez["tasks"][key] = {};
 		const razdelTask = urls[key];
 		let ii = 0;
@@ -60,8 +65,22 @@ app.post("/getTasks", function(req, res) {
 		for(let element of razdelTask){
 			console.log(++ii, razdelTask.length);
 			element.num = element.num.replace('§', '');
-			rez["tasks"][key][element.num] = {}
-			await getImg(element.url).then((el)=>{
+			rez["tasks"][key][element.num] = {};
+			const el = await getImg(element.url).catch(async ()=>{
+				console.error("Произошла ошибка с ", ii, element.num, key);
+				for(let i=0; i < 5; i++){
+					const el = await getImg(element.url).catch(()=>{
+						console.error("Это уже ", i, "попытка");
+					});
+					if(el) {
+						rez["tasks"][key][element.num] = el;
+						break;
+					}
+				}
+			});
+			rez["tasks"][key][element.num] = el;
+			
+			/*await getImg(element.url).then((el)=>{
 				rez["tasks"][key][element.num] = el;
 				countError = 0;
 				console.log(el);
@@ -70,7 +89,7 @@ app.post("/getTasks", function(req, res) {
 					rez["tasks"][key][element.num] = await getImg(element.url);
 				}
 				console.log('произошла ошибка с', ii);
-			});
+			});*/
 		}
 		
 		/*
@@ -81,7 +100,7 @@ app.post("/getTasks", function(req, res) {
 			});
 		});*/
 	}
-
+	isProcessing=false;
 	res.send(rez);
 	rez = {
 		book_name: "",
